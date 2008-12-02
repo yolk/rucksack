@@ -38,14 +38,15 @@ module Rucksack
   end
   
   def self.pack
-    packed, existed = [], []
+    packed, existed, timer = [], [], Time.now
     all_unpacked_files do |type, name, files|
       file = Rucksack::PackedFile.new(type, name, files).pack
       packed << "#{file.file_name} (#{file.compression_rate}%)" if file.compression_rate
       existed << file.file_name unless file.compression_rate
     end
-    puts "Packed #{packed.size} files: #{packed.sort.join(", ")}" if packed.any?
-    puts "Skipped #{existed.size} already existing files: #{existed.sort.join(", ")}" if existed.any?
+    timer = (Time.now - timer).to_i
+    puts "Packed #{packed.size} files: #{packed.sort.join(", ")} (#{timer}s)" if packed.any?
+    puts "Skipped #{existed.size} already existing files: #{existed.sort.join(", ")} (#{timer}s)" if existed.any?
   end
   
   def self.unpack

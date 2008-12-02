@@ -1,7 +1,8 @@
 module Rucksack
   module Packer
-    class YuiCompressor
+    class YuiCompressor < Rucksack::Packer::Base
       
+      supports :javascripts, :stylesheets
       YUI_COMPRESSOR = "#{File.dirname(__FILE__)}/../../../vendor/yuicompressor-2.4.2.jar"
       
       def pack(source, target)
