@@ -1,0 +1,31 @@
+Rucksack is a Rails plug-in to pack and compress CSS- and JavaScript-files with the YUI Compressor. It's easy extendable to use other compressor-options like Packer, JSMin and CSSTidy.
+
+Renaming for files managed by Git or SVN (as seen in earlier asset_package versions) are planned.
+
+Inspired by asset_package and asset_compressor.
+
+h3. Install
+
+Install the plug-in from github:
+
+_script/plugin git://github.com/yolk/rucksack.git_
+
+Create config/rucksack.yml:
+
+_rake rucksack:install_
+
+Please reorder and remove files in config/rucksack.yml so dependencies are loaded in correct order.
+
+h3. Deploy
+
+Run _rake rucksack:pack_ on every deploy before restaring your appserver(s). Rucksack will silently fall back to your uncompressed assets when the files are missing.
+
+If you use capistrano for deployment:
+
+@
+   desc "Pack assets" 
+   task :pack_assets, :roles => [:web,:app] do
+      run "cd #{release_path} && rake RAILS_ENV=#{rails_env} rucksack:pack"
+   end
+   after "deploy:update_code", "deploy:pack_assets"
+@@

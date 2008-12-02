@@ -1,0 +1,176 @@
+module Rucksack
+  
+  VERSION = "0.1"
+  
+  mattr_reader :unpacked_files
+  @@unpacked_files = (File.exists?("#{RAILS_ROOT}/config/rucksack.yml") ? 
+  YAML.load_file("#{RAILS_ROOT}/config/rucksack.yml") : {})
+  
+  mattr_accessor :environments
+  @@environments ||= %w(production staging profile)
+  
+  def self.install
+    yml_path = "#{RAILS_ROOT}/config/rucksack.yml"
+    
+    unless File.exists?(yml_path)
+      yml = Hash.new
+      
+      yml['javascripts'] = {"base" => build_file_list("#{RAILS_ROOT}/public/javascripts", "js")}
+      yml['stylesheets'] = {"base" => build_file_list("#{RAILS_ROOT}/public/stylesheets", "css")}
+
+      File.open(yml_path, "w") { |out| YAML.dump(yml, out) }
+  
+      puts "config/rucksack.yml example file created!"
+      puts "Please reorder files so dependencies are loaded in correct order."
+    else
+      puts "config/rucksack.yml already exists."
+    end
+  end
+  
+  def self.warmup
+    ActionView::Base.send :include, RucksackHelper
+    
+    all_unpacked_files do |type, name, files|
+      unpacked_files[type][name] = Rucksack::PackedFile.new(type, name, files).check_files
+    end
+    
+    packed_files if pack?
+  end
+  
+  def self.pack
+    packed, existed = [], []
+    all_unpacked_files do |type, name, files|
+      file = Rucksack::PackedFile.new(type, name, files).pack
+      packed << "#{file.file_name} (#{file.compression_rate}%)" if file.compression_rate
+      existed << file.file_name unless file.compression_rate
+    end
+    puts "Packed #{packed.size} files: #{packed.sort.join(", ")}" if packed.any?
+    puts "Skipped #{existed.size} already existing files: #{existed.sort.join(", ")}" if existed.any?
+  end
+  
+  def self.unpack
+    removed = []
+    all_unpacked_files do |type, name, files|
+      file = Rucksack::PackedFile.new(type, name, files)
+      removed << file.file_name if file.remove_file
+    end
+    puts "Removed #{removed.size} files: #{removed.sort.join(", ")}"
+  end
+  
+  def self.content
+    pack? ? packed_files : unpacked_files
+  end
+  
+  def self.packed_files
+    @@packed_files ||= begin
+      r = {}
+      all_unpacked_files do |type, name, files|
+        file = Rucksack::PackedFile.new(type, name, files)
+        (r[type] ||= {})[name] = file.exist? ? 
+        [file.file_name] : file.files
+      end
+      r
+    end
+  end
+  
+  def self.pack?
+    environments.include?(Rails.env)
+  end
+  
+  private
+  
+  def self.all_unpacked_files
+    unpacked_files.keys.each do |type|
+      unpacked_files[type].each do |name, files|
+        yield type, name, files
+      end
+    end
+  end
+  
+  def self.build_file_list(path, extension)
+    re = Regexp.new(".#{extension}\\z")
+    file_list = Dir.new(path).entries.delete_if { |x| ! (x =~ re) }.map {|x| x.chomp(".#{extension}")}
+    # reverse javascript entries so prototype comes first on a base rails app
+    file_list.reverse! if extension == "js"
+    file_list
+  end
+  
+  class PackedFile
+    
+    attr_reader :type, :name, :files, :compression_rate
+    
+    def initialize(type, name, files)
+      @type = type
+      @name = name
+      @files = files
+    end
+    
+    def check_files
+      files.map! do |file|
+        if File.exists?("#{type_path}/#{file}")
+          file
+        elsif File.exists?("#{type_path}/#{file}.#{file_extension}")
+          "#{file}.#{file_extension}" 
+        else
+          raise "Can't find file: /#{type}/#{file}"
+        end
+      end
+    end
+    
+    def pack
+      unless exist?
+        merge!
+        @compression_rate = Rucksack::Packer.pack(self)
+        remove_merged!
+      end
+      self
+    end
+    
+    def remove_file
+      FileUtils.rm_f(file_path) if exist?
+    end
+    
+    def file_name
+      "#{name}.pack.#{file_extension}"
+    end
+    
+    def file_path
+      "#{type_path}/#{file_name}"
+    end
+    
+    def tmp_file_path
+      "#{RAILS_ROOT}/tmp/#{name}.tmp.#{file_extension}"
+    end
+    
+    def exist?
+      File.exist?(file_path)
+    end
+    
+    private
+    
+    def merge!
+      remove_merged!
+      File.open(tmp_file_path, "w+") do |tmp_file|
+        files.each do |file_name|
+          File.open("#{type_path}/#{file_name}", "r") do |file| 
+            tmp_file << file.read + "\n" 
+          end
+        end
+      end
+    end
+    
+    def remove_merged!
+      FileUtils.rm_f(tmp_file_path)
+    end
+    
+    def type_path
+      "#{RAILS_ROOT}/public/#{type}"
+    end
+    
+    def file_extension
+      type == "javascripts" ? "js" : "css"
+    end
+     
+  end
+  
+end
