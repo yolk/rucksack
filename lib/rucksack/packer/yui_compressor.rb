@@ -6,7 +6,7 @@ module Rucksack
       YUI_COMPRESSOR = "#{File.dirname(__FILE__)}/../../../vendor/yuicompressor-2.4.2.jar"
       
       def pack(source, target)
-        `java -jar #{YUI_COMPRESSOR} #{source} -o #{target}`
+        `java -jar #{YUI_COMPRESSOR} --charset utf8  #{source} -o #{target}`
       end
       
     end
