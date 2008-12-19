@@ -8,26 +8,37 @@ h3. Install
 
 Install the plug-in from github:
 
-  script/plugin git://github.com/yolk/rucksack.git
+  script/plugin install git://github.com/yolk/rucksack.git
 
 Create config/rucksack.yml:
 
   rake rucksack:install
 
-Please reorder and remove files in config/rucksack.yml so dependencies are loaded in correct order.
+h3. Config
+
+Please reorder and remove files in config/rucksack.yml so dependencies are loaded in correct order. In most cases you my want to structure your assets in different groups e.g. for different sections of your webapp or for different browsers/clients.
+
+Change your _javascript_include_tag_ and _stylesheet_link_tag_ to _javascript_include_packed_ and _stylesheet_link_packed_. For example:
+
+   <%= javascript_include_packed :base %>
+	<%= stylesheet_link_packed :base %>
 
 h3. Deploy
 
-Run
+On each deploy you have to run
 
   rake rucksack:pack
 
-on every deploy before restaring your appserver(s). Rucksack will silently fall back to your uncompressed assets when the files are missing.
+before (!) restaring your applicationserver(s). Rucksack will silently fall back to your uncompressed assets when the files are missing.
 
-If you use capistrano for deployment:
-
-  desc "Pack assets with rucksack" 
-  task :pack_assets, :roles => [:web,:app] do
-    run "cd #{release_path} && rake RAILS_ENV=#{rails_env} rucksack:pack"
-  end
-  after "deploy:update_code", "deploy:pack_assets"
+If you use capistrano for deployment this is an easy one:
+   
+   namespace :deploy do
+     desc "Pack assets with rucksack" 
+     task :pack_assets, :roles => [:web,:app] do
+       run "cd #{release_path} && rake RAILS_ENV=#{rails_env} rucksack:pack"
+     end
+     after "deploy:update_code", "deploy:pack_assets"
+   end
+   
+Please check if you have java installed on your applicationserver(s), when using the YUICompressor.
