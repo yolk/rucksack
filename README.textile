@@ -36,7 +36,7 @@ If you use capistrano for deployment this is an easy one:
    namespace :deploy do
      desc "Pack assets with rucksack" 
      task :pack_assets, :roles => [:web,:app] do
-       run "cd #{release_path} && rake RAILS_ENV=#{rails_env} rucksack:pack"
+       run "cd #{release_path} && rake RAILS_ENV=#{fetch(:rails_env, 'production')} rucksack:pack"
      end
      after "deploy:update_code", "deploy:pack_assets"
    end
