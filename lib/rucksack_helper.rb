@@ -2,13 +2,13 @@ module RucksackHelper
   def javascript_include_packed(*files)
     include_packed_files('javascripts', files) do |f|
       javascript_include_tag(*f)
-    end
+    end.join
   end
   
   def stylesheet_link_packed(*files)
     include_packed_files('stylesheets', files) do |f|
       stylesheet_link_tag(*f) 
-    end
+    end.join
   end
   
   private

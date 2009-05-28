@@ -41,4 +41,6 @@ If you use capistrano for deployment this is an easy one:
      after "deploy:update_code", "deploy:pack_assets"
    end
    
-Please check if you have java installed on your applicationserver(s), when using the YUICompressor.
+Please make sure you have java installed on your applicationserver(s), when using the YUICompressor.
+
+rucksack was successful tested with Rails 2.2-2.3 and on Ruby 1.8.6 and 1.9.1
