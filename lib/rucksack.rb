@@ -41,8 +41,11 @@ module Rucksack
     packed, existed, timer = [], [], Time.now
     all_unpacked_files do |type, name, files|
       file = Rucksack::PackedFile.new(type, name, files).pack
-      packed << "#{file.file_name} (#{file.compression_rate}%)" if file.compression_rate
-      existed << file.file_name unless file.compression_rate
+      if file.compression_rate
+        packed << "#{file.file_name} (#{file.packed_size}KB saved #{file.compression_rate}%)"
+      else
+        existed << file.file_name
+      end
     end
     timer = (Time.now - timer).to_i
     puts "Packed #{packed.size} files: #{packed.sort.join(", ")} (#{timer}s)" if packed.any?
@@ -98,7 +101,7 @@ module Rucksack
   
   class PackedFile
     
-    attr_reader :type, :name, :files, :compression_rate
+    attr_reader :type, :name, :files, :compression_rate, :packed_size
     
     def initialize(type, name, files)
       @type = type
@@ -121,7 +124,7 @@ module Rucksack
     def pack
       unless exist?
         merge!
-        @compression_rate = Rucksack::Packer.pack(self)
+        @compression_rate, @packed_size = Rucksack::Packer.pack(self)
         remove_merged!
       end
       self

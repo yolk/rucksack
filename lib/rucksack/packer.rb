@@ -14,11 +14,12 @@ module Rucksack
       else
         raise "Unsupported file type: #{packed_file.type}"
       end
-      raise "#{packer.class.name} can't compress #{packed_file.type}!" unless packer.supports?(packed_file.type)
       
       packer.pack(packed_file.tmp_file_path, packed_file.file_path)
       
-      100 - ((File.size(packed_file.file_path).to_f / File.size(packed_file.tmp_file_path))*100).to_i
+      raw_size = (File.size(packed_file.tmp_file_path)/10.24).round/100.0
+      packed_size = (File.size(packed_file.file_path)/10.24).round/100.0
+      [100 - (packed_size/raw_size)*100).to_i, packed_size]
     end
     
   end
