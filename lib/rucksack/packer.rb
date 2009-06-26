@@ -19,7 +19,8 @@ module Rucksack
       
       raw_size = (File.size(packed_file.tmp_file_path)/10.24).round/100.0
       packed_size = (File.size(packed_file.file_path)/10.24).round/100.0
-      [100 - (packed_size/raw_size)*100).to_i, packed_size]
+      compression_rate = 100 - ((packed_size/raw_size)*100).to_i
+      [compression_rate, packed_size]
     end
     
   end
