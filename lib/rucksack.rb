@@ -87,7 +87,7 @@ module Rucksack
     unpacked_files.keys.each do |type|
       unpacked_files[type].each do |name, files|
         yield type, name, files
-      end
+      end if unpacked_files[type]
     end
   end
   
