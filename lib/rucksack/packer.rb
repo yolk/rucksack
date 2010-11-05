@@ -14,7 +14,7 @@ module Rucksack
       else
         raise "Unsupported file type: #{packed_file.type}"
       end
-      
+
       packer.pack(packed_file.tmp_file_path, packed_file.file_path)
       
       raw_size = (File.size(packed_file.tmp_file_path)/10.24).round/100.0
