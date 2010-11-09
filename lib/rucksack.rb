@@ -28,8 +28,8 @@ module Rucksack
   end
   
   def self.warmup
-    ActionView::Base.send :include, RucksackHelper
-    
+    ActionController::Base.helper(RucksackHelper)
+
     all_unpacked_files do |type, name, files|
       unpacked_files[type][name] = Rucksack::PackedFile.new(type, name, files).check_files
     end
