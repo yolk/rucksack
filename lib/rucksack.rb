@@ -3,20 +3,20 @@ module Rucksack
   VERSION = "0.1"
   
   mattr_reader :unpacked_files
-  @@unpacked_files = (File.exists?("#{RAILS_ROOT}/config/rucksack.yml") ? 
-  YAML.load_file("#{RAILS_ROOT}/config/rucksack.yml") : {})
+  @@unpacked_files = (File.exists?("#{Rails.root}/config/rucksack.yml") ? 
+  YAML.load_file("#{Rails.root}/config/rucksack.yml") : {})
   
   mattr_accessor :environments
   @@environments ||= %w(production staging profile)
   
   def self.install
-    yml_path = "#{RAILS_ROOT}/config/rucksack.yml"
+    yml_path = "#{Rails.root}/config/rucksack.yml"
     
     unless File.exists?(yml_path)
       yml = Hash.new
       
-      yml['javascripts'] = {"base" => build_file_list("#{RAILS_ROOT}/public/javascripts", "js")}
-      yml['stylesheets'] = {"base" => build_file_list("#{RAILS_ROOT}/public/stylesheets", "css")}
+      yml['javascripts'] = {"base" => build_file_list("#{Rails.root}/public/javascripts", "js")}
+      yml['stylesheets'] = {"base" => build_file_list("#{Rails.root}/public/stylesheets", "css")}
 
       File.open(yml_path, "w") { |out| YAML.dump(yml, out) }
   
@@ -143,7 +143,7 @@ module Rucksack
     end
     
     def tmp_file_path
-      "#{RAILS_ROOT}/tmp/#{name}.tmp.#{file_extension}"
+      "#{Rails.root}/tmp/#{name}.tmp.#{file_extension}"
     end
     
     def exist?
@@ -168,7 +168,7 @@ module Rucksack
     end
     
     def type_path
-      "#{RAILS_ROOT}/public/#{type}"
+      "#{Rails.root}/public/#{type}"
     end
     
     def file_extension
