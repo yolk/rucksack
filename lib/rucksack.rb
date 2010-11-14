@@ -70,7 +70,7 @@ module Rucksack
       r = {}
       all_unpacked_files do |type, name, files|
         file = Rucksack::PackedFile.new(type, name, files)
-        (r[type] ||= {})[name] = file.exist? ? 
+        (r[type] ||= {})[name] = file.exist? ?
         [file.file_name] : file.files
       end
       r
@@ -108,17 +108,20 @@ module Rucksack
       @name = name
       @files = files
     end
-    
+
     def check_files
       files.map! do |file|
-        if File.exists?("#{type_path}/#{file}")
-          file
-        elsif File.exists?("#{type_path}/#{file}.#{file_extension}")
-          "#{file}.#{file_extension}" 
-        else
-          raise "Can't find file: /#{type}/#{file}"
+        patterns = [
+          "#{type_path}/#{file}", 
+          "#{type_path}/#{file}.#{file_extension}",
+          "#{public_path}/#{file}",
+          "#{public_path}/#{file}.#{file_extension}"
+        ]        
+        patterns.each do |pattern|
+          return pattern if File.file?(pattern)
         end
-      end
+        raise "Can't find file: #{file} in #{type_path} or #{public_path}"
+      end    
     end
     
     def pack
@@ -156,7 +159,7 @@ module Rucksack
       remove_merged!
       File.open(tmp_file_path, "w+") do |tmp_file|
         files.each do |file_name|
-          File.open("#{type_path}/#{file_name}", "r") do |file| 
+          File.open(file_name, "r") do |file| 
             tmp_file << file.read + "\n" 
           end
         end
@@ -168,8 +171,12 @@ module Rucksack
     end
     
     def type_path
-      "#{Rails.root}/public/#{type}"
+      "#{public_path}/#{type}"
     end
+    
+    def public_path
+      "#{RAILS_ROOT}/public"
+    end    
     
     def file_extension
       type == "javascripts" ? "js" : "css"
